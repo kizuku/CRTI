@@ -35,6 +35,7 @@ MainApp()
 Func MainApp()
    ; Variable declarations
    Local $GUI, $msg
+   Global $fileChosen = ""
    Global Const $ARR_SIZE = 10
    Global Const $COLOR_SIDEBAR = 0x254566
    Global Const $TOOL_COLOR = 0x19D1AC
@@ -348,14 +349,13 @@ Func MainApp()
 			BaseCLIWrapper("FHXAnalogInfo", $fileChosen)
 
 		 Case $FHXAreaLibObjListButton
-			;AreaLibObjListWrapper($fileName)
 			BaseCLIWrapper("FHXAreaLibObjList", $fileChosen)
 
 		 Case $FHXBulkTextProcButton
 			BulkTextProcWrapper($fileChosen)
 
 		 Case $FHXDiffToolButton
-			DiffToolWrapper("file1", "file2")
+			DiffToolWrapper($fileChosen)
 
 		 Case $FHXHistoryParamsButton
 			BaseCLIWrapper("FHXHistoryParams", $fileChosen)
@@ -448,6 +448,10 @@ Func OpenResults()
 
    WinActivate("Run")
    WinWaitActive("Run", "", 5)
+   If Not WinActive("Run") Then
+	  MsgBox("", "CRTI", "Something went wrong when opening the results folder.")
+	  Return
+   EndIf
    Send($server & "\CRTI\Results{ENTER}")
 
    ProcessWaitClose("cmd.exe")
@@ -523,7 +527,7 @@ EndFunc
 
 ; Select the fhx file(s) to be processed
 Func ChooseFile()
-   Global $fileChosen = ""
+   $fileChosen = ""
    $fileChosen = FileOpenDialog("Select a file", $path & "\CRTI\FHXFiles", "FHX files (*.fhx)", BitOR($FD_FILEMUSTEXIST, $FD_PATHMUSTEXIST, $FD_MULTISELECT))
    If @error Then
 	  ; Display error message
@@ -571,14 +575,14 @@ Func CreateBatchFile($paramTool, $paramFilename)
 
    Local $file = FileOpen($path & "\CRTI\Tools\crtiFhxToRaw.bat", 2)
 
-   FileWriteLine($file, "@echo off")
+   ;FileWriteLine($file, "@echo off")
    FileWriteLine($file, "cls")
    FileWriteLine($file, "set tool=" & $paramTool)
    FileWriteLine($file, "set file=" & $paramFilename)
-   FileWriteLine($file, "set filename=" & $name)
+   FileWriteLine($file, "set name=" & $name)
    FileWriteLine($file, "set path=" & $path & "\CRTI")
-   FileWriteLine($file, "call %path%\Tools\CLITools\%tool% %file% > %path%\TempResults\%tool%\%filename%.csv")
-   FileWriteLine($file, "echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
+   FileWriteLine($file, "call %path%\Tools\CLITools\%tool% %file% > %path%\TempResults\%tool%\%name%.csv")
+   FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
 
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\crtiFhxToRaw.bat")
@@ -637,11 +641,20 @@ Func FormatExcel ($paramTool, $paramFilename)
 
    ; Move xlsx file to server and clean up files
    Local $file = FileOpen($path & "\CRTI\Tools\delFile.bat", 2)
-   FileWriteLine($file, "@echo off")
+   ;FileWriteLine($file, "@echo off")
    FileWriteLine($file, "cls")
-   FileWriteLine($file, "robocopy " & $path & "\CRTI\TempResults\" & $paramTool & "\ " & $server & "\CRTI\Results\" & $paramTool & "\ " & $name & ".xlsx")
-   FileWriteLine($file, "del " & $path & "\CRTI\TempResults\" & $paramTool & "\" & $name & ".csv")
-   FileWriteLine($file, "del " & $path & "\CRTI\TempResults\" & $paramTool & "\" & $name & ".xlsx")
+   FileWriteLine($file, "set path=" & $path)
+   FileWriteLine($file, "set server=" & $server)
+   FileWriteLine($file, "set tool=" & $paramTool)
+   FileWriteLine($file, "set name=" & $name)
+   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\%tool%\ %server%\CRTI\Results\%tool%\ %name%.xlsx")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%.csv")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%.xlsx")
+
+
+   ;FileWriteLine($file, "pause") ; NOTE ====================================
+
+
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -778,9 +791,12 @@ Func RunRecTree($paramFilename)
    Local $file = FileOpen($path & "\CRTI\Tools\delFile.bat", 2)
    FileWriteLine($file, "@echo off")
    FileWriteLine($file, "cls")
-   FileWriteLine($file, "robocopy " & $path & "\CRTI\TempResults\FHXRecTree\ " & $server & "\CRTI\Results\FHXRecTree\ " & $name & ".xlsx")
-   FileWriteLine($file, "del " & $path & "\CRTI\TempResults\FHXRecTree\" & $name & ".txt")
-   FileWriteLine($file, "del " & $path & "\CRTI\TempResults\FHXRecTree\" & $name & ".xlsx")
+   FileWriteLine($file, "set path=" & $path)
+   FileWriteLine($file, "set server=" & $server)
+   FileWriteLine($file, "set name=" & $name)
+   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecTree\ %server%\CRTI\Results\FHXRecTree\ %name%.xlsx")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\FHXRecTree\%name%.txt")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\FHXRecTree\%name%.xlsx")
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -823,19 +839,23 @@ Func RunBulkTextProc($paramFilename, $patternFile)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
-   Local $file = FileOpen($path & "\CRTI\Tools\runBulkTextProc.bat", 2)
+   Run("cmd.exe")
+   WinWaitActive("C:\WINDOWS\SYSTEM32\cmd.exe", "", 10)
+   If Not WinActive("C:\WINDOWS\SYSTEM32\cmd.exe") Then
+	  MsgBox("", "CRTI", "Something went wrong when opening cmd")
+	  Return
+   EndIf
 
-   FileWriteLine($file, "@echo off")
-   FileWriteLine($file, "cls")
-   FileWriteLine($file, "set path=" & $path)
-   FileWriteLine($file, "set patternFile=" & $patternFile)
-   FileWriteLine($file, "set file=" & $paramFilename)
-   FileWriteLine($file, "set name=" & $name)
-   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXBulkTextProc.exe %patternFile% %file% > %path%\CRTI\TempResults\FHXBulkTextProc\%name%.fhx")
-   FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
+   Send("call " & $path & "\CRTI\Tools\CLITools\FHXBulkTextProc.exe " & $patternFile & " " & $paramFilename & " > " & $path & "\CRTI\TempResults\FHXBulkTextProc\" & $name & ".fhx")
+   Send("{ENTER}")
+   Sleep(1000)
+   Send("n")
+   Send("{ENTER}")
+   Send("echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
+   Send("{ENTER}")
+   Send("exit")
+   Send("{ENTER}")
 
-   FileClose($file)
-   ShellExecute($path & "\CRTI\Tools\runBulkTextProc.bat")
    ProcessWaitClose("cmd.exe")
 
    ; Check for tool error
@@ -850,8 +870,12 @@ Func RunBulkTextProc($paramFilename, $patternFile)
    Local $file2 = FileOpen($path & "\CRTI\Tools\copyFile.bat", 2)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
-   FileWriteLine($file2, "robocopy %path%\CRTI\TempResults\FHXBulkTextProc\ %server%\CRTI\Results\FHXBulkTextProc\ %name%.fhx")
+   FileWriteLine($file2, "set name=" & $name)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXBulkTextProc\ %server%\CRTI\Results\FHXBulkTextProc\ %name%.fhx")
    FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXBulkTextProc\%name%.fhx")
+
+   FileWriteLine($file2, "pause")
+
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -934,7 +958,7 @@ Func RunFHXSearch($paramFilename, $paramText)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "robocopy %path%\CRTI\TempResults\FHXSearch\ %server%\CRTI\Results\FHXSearch\ %name%.txt")
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXSearch\ %server%\CRTI\Results\FHXSearch\ %name%.txt")
    FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXSearch\%name%.txt")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
@@ -1005,7 +1029,7 @@ Func RunFHXUnlinkInstConfig($paramFilename)
    FileWriteLine($file, "set name=" & $name)
    FileWriteLine($file, "set path=" & $path)
    FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXUnlinkInstConfig %file% > %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%.fhx")
-   FileWriteLine($file, "echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
+   FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
 
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\runUnlinkInstConfig.bat")
@@ -1021,8 +1045,11 @@ Func RunFHXUnlinkInstConfig($paramFilename)
    EndIf
 
    Local $file2 = FileOpen($path & "\CRTI\Tools\copyFile.bat", 2)
-   FileWriteLine($file2, "robocopy " & $path & "\CRTI\TempResults\FHXUnlinkInstConfig\ " & $server & "\CRTI\Results\FHXUnlinkInstConfig\ %filename%.fhx")
-   FileWriteLine($file2, "del " & $path & "\CRTI\TempResults\FHXUnlinkInstConfig\%filename%.fhx")
+   FileWriteLine($file2, "set path=" & $path)
+   FileWriteLine($file2, "set server=" & $server)
+   FileWriteLine($file2, "set name=" & $name)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXUnlinkInstConfig\ %server%\CRTI\Results\FHXUnlinkInstConfig\ %name%.fhx")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%.fhx")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1043,71 +1070,14 @@ Func FHXUnlinkInstConfigWrapper($paramFilename)
 		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 	  Else
 		 CleanUp()
-		 If $size = 1 Then
+		 If NOT StringInStr($paramFilename, ", ") Then
 			RunFHXUnlinkInstConfig($paramFilename)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 		 Else
-			For $i = 2 To $size
-			   $paramFilename = $multiFileArray[$i]
-			   $paramFilename = StringLeft($paramFilename, StringInStr($paramFilename, ".", Default, -1) - 1)
-			   RunFHXUnlinkInstConfig($paramFilename)
-			   If $i = $size Then
-				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
-			   EndIf
-			Next
-		 EndIf
-	  EndIf
-   EndIf
-
-EndFunc
-
-; Run tool
-Func RunFHXAreaLibObjList($paramFilename)   ; ================= Might not need if works as BaseCLIWrapper
-
-   Local $file = FileOpen($path & "\CRTI\Tools\runAreaLibObjList.bat", 2)
-
-   FileWriteLine($file, "@echo off")
-   FileWriteLine($file, "cls")
-   FileWriteLine($file, "call " & $path & "\CRTI\Tools\CLITools\FHXAreaLibObjList " & $path & "\CRTI\FHXFiles\" & $paramFilename & ".fhx > " & $path & "\CRTI\TempResults\FHXAreaLibObjList\" & $paramFilename & ".csv")
-   FileWriteLine($file, "echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
-
-   FileClose($file)
-   ShellExecute($path & "\CRTI\Tools\runAreaLibObjList.bat")
-   ProcessWaitClose("cmd.exe")
-
-   ; Check for tool error
-   Local $returnVal, $errorMsg
-   getReturnVal($returnVal)
-   If Not ($returnVal = 0) Then
-	  MakeErrorMsg($returnVal, $errorMsg)
-	  MsgBox($MB_SYSTEMMODAL, "CRTI", $errorMsg)
-	  Return
-   EndIf
-
-   FormatExcel("FHXAreaLibObjList", $paramFilename)
-
-EndFunc
-
-Func AreaLibObjListWrapper($paramFilename)   ; ======================== Might not need if works as BaseCLIWrapper
-
-   If $fileName = "" Then
-	  MsgBox($MB_SYSTEMMODAL, "CRTI", "Please choose a file")
-   Else
-	  Local $msg = MsgBox($MB_OKCANCEL, "CRTI", "Start operation.")
-
-	  If $msg = $IDCANCEL Then
-		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
-	  Else
-		 CleanUp()
-		 If $size = 1 Then
-			RunFHXAreaLibObjList($paramFilename)
-			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
-		 Else
-			For $i = 2 To $size
-			   $paramFilename = $multiFileArray[$i]
-			   $paramFilename = StringLeft($paramFilename, StringInStr($paramFilename, ".", Default, -1) - 1)
-			   RunFHXAreaLibObjList($paramFilename)
-			   If $i = $size Then
+			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
+			For $i = 1 To $array[0]
+			   RunFHXUnlinkInstConfig($array[$i])
+			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 			   EndIf
 			Next
@@ -1120,13 +1090,17 @@ EndFunc
 ; Run tool
 Func RunModParamsBuildOPC($paramFilename)
 
+   Local $drive, $dir, $name, $extension
+   _PathSplit($paramFilename, $drive, $dir, $name, $extension)
+
    Local $file = FileOpen($path & "\CRTI\Tools\runModParamsBuildOPC.bat", 2)
 
    FileWriteLine($file, "@echo off")
    FileWriteLine($file, "cls")
-   FileWriteLine($file, "set filename=" & $paramFilename)
-   FileWriteLine($file, "call " & $path & "\CRTI\Tools\CLITools\FHXModParamsBuildOPC " & $path & "\CRTI\FHXFiles\%filename%.fhx")
-   FileWriteLine($file, "echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
+   FileWriteLine($file, "set file=" & $paramFilename)
+   FileWriteLine($file, "set path=" & $path)
+   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXModParamsBuildOPC %file%")
+   FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
 
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\runModParamsBuildOPC.bat")
@@ -1143,9 +1117,9 @@ Func RunModParamsBuildOPC($paramFilename)
    EndIf
 
    ; Save as xlsx instead of csv
-   Local $windowTitle = $paramFilename & " - Excel"
+   Local $windowTitle = $name & " - Excel"
    Local $oExcel = _Excel_Open(True, False, True, True)  ; Works: FFTT
-   Local $oBook = _Excel_BookOpen($oExcel, $path & "\CRTI\FHXFiles\" & $paramFilename & ".txt")
+   Local $oBook = _Excel_BookOpen($oExcel, $path & "\CRTI\FHXFiles\" & $name & ".txt")
 
    ProcessWait("excel.exe")
    WinActivate($windowTitle)
@@ -1169,11 +1143,11 @@ Func RunModParamsBuildOPC($paramFilename)
    ; Copy temp result to user folder
    Local $file2 = FileOpen($path & "\CRTI\Tools\delFile.bat", 2)
 
-   FileWriteLine($file2, "@echo off")
+   ;FileWriteLine($file2, "@echo off")
    FileWriteLine($file2, "cls")
-   FileWriteLine($file2, "robocopy " & $path & "\CRTI\FHXFiles\ " & $path & "\CRTI\TempResults\FHXModParamsBuildOPC\ " & $paramFilename & ".xlsx")
-   FileWriteLine($file2, "del " & $path & "\CRTI\FHXFiles\" & $paramFilename & ".txt")
-   FileWriteLine($file2, "del " & $path & "\CRTI\FHXFiles\" & $paramFilename & ".xlsx")
+   FileWriteLine($file2, "set path=" & $path)
+   FileWriteLine($file2, "set name=" & $name)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\FHXFiles\ %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %name%.xlsx")
 
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
@@ -1181,7 +1155,7 @@ Func RunModParamsBuildOPC($paramFilename)
    FileDelete($path & "\CRTI\Tools\delFile.bat")
 
    Local $oExcel2 = _Excel_Open(True, False, True, True) ; Works: FFTT
-   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXModParamsBuildOPC\" & $paramFilename & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXModParamsBuildOPC\" & $name & ".xlsx")
 
    ProcessWait("excel.exe")
    WinActivate($windowTitle)
@@ -1199,8 +1173,13 @@ Func RunModParamsBuildOPC($paramFilename)
 
    ; Copy result to server and delete extra files
    Local $file3 = FileOpen($path & "\CRTI\Tools\movFile.bat", 2)
-   FileWriteLine($file3, "robocopy " & $path & "\CRTI\TempResults\FHXModParamsBuildOPC\ " & $server & "\CRTI\Results\FHXModParamsBuildOPC\ " & $paramFilename & ".xlsx")
-   FileWriteLine($file3, "del " & $path & "\CRTI\TempResults\FHXModParamsBuildOPC\" & $paramFilename & ".xlsx")
+   FileWriteLine($file3, "set path=" & $path)
+   FileWriteLine($file3, "set server=" & $server)
+   FileWriteLine($file3, "set name=" & $name)
+   FileWriteLine($file3, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %server%\CRTI\Results\FHXModParamsBuildOPC\ %name%.xlsx")
+   FileWriteLine($file3, "del %path%\CRTI\TempResults\FHXModParamsBuildOPC\%name%.xlsx")
+   FileWriteLine($file3, "del %path%\CRTI\FHXFiles\%name%.txt")
+   FileWriteLine($file3, "del %path%\CRTI\FHXFiles\%name%.xlsx")
    FileClose($file3)
    ShellExecute($path & "\CRTI\Tools\movFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1219,15 +1198,14 @@ Func ModParamsBuildOPCWrapper($paramFilename)
 		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 	  Else
 		 CleanUp()
-		 If $size = 1 Then
+		 If NOT StringInStr($paramFilename, ", ") Then
 			RunModParamsBuildOPC($paramFilename)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 		 Else
-			For $i = 2 To $size
-			   $paramFilename = $multiFileArray[$i]
-			   $paramFilename = StringLeft($paramFilename, StringInStr($paramFilename, ".", Default, -1) - 1)
-			   RunModParamsBuildOPC($paramFilename)
-			   If $i = $size Then
+			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
+			For $i = 1 To $array[0]
+			   RunModParamsBuildOPC($array[$i])
+			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 			   EndIf
 			Next
@@ -1240,77 +1218,94 @@ EndFunc
 ; Run tool
 Func RunDragNDropTool($paramTool, $paramFilename)
 
-   Run("cmd.exe", "", @SW_HIDE, $RUN_CREATE_NEW_CONSOLE)
-   WinWait($path & "\WINDOWS\SYSTEM32\cmd.exe")
-   WinActivate($path & "\WINDOWS\SYSTEM32\cmd.exe")
+   Local $drive, $dir, $name, $extension
+   _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
-   Send("robocopy{SPACE}" & $path & "\CRTI\FHXFiles\{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $paramFilename & ".fhx")
-   Send("{ENTER}")
-   Send($path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\tool.vbs " & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $paramFilename & ".fhx")
-   Send("{ENTER}")
+   MsgBox("", "CRTI", "If a security warning to open the file appears, please open it.")
 
-   Sleep(1000)
+   Local $file1 = FileOpen($path & "\CRTI\Tools\rundnd.bat", 2)
+   FileWriteLine($file1, "@echo off")
+   FileWriteLine($file1, "cls")
+   FileWriteLine($file1, "set path=" & $path)
+   FileWriteLine($file1, "set tool=" & $paramTool)
+   FileWriteLine($file1, "set name=" & $name)
+   FileWriteLine($file1, "C:\Windows\System32\robocopy %path%\CRTI\FHXFiles\ %path%\CRTI\Tools\DragNDropTools\%tool%\ %name%.fhx")
+   FileWriteLine($file1, "%path%\CRTI\Tools\DragNDropTools\%tool%\tool.vbs %path%\CRTI\Tools\DragNDropTools\%tool%\%name%.fhx")
+   FileClose($file1)
+   ShellExecute($path & "\CRTI\Tools\rundnd.bat")
 
-   If WinExists("Open File - Security Warning") Then
-	  WinActivate("Open File - Security Warning")
-	  Send("{LEFT}{ENTER}")
-   EndIf
+   ProcessWaitClose("cmd.exe")
+   FileDelete($path & "\CRTI\Tools\rundnd.bat")
+
+   Sleep(1500)
+
+   WinWaitActive("Open File - Security Warning", "Do you want to open this file?", 10)
+   Send("o")
 
    Sleep(2000)
-
-   WinClose($path & "\WINDOWS\SYSTEM32\cmd.exe")
-   ProcessClose("cmd.exe")
-   ProcessWaitClose("cmd.exe")
 
    ; Loop until process is done (signaled by doneProcessing.txt)
    Local $file = FileOpen($path & "\CRTI\Tools\checkForFile.bat", 2)
 
    FileWriteLine($file, "@echo off")
-   FileWriteLine($file, "set lookForFile=" & $path & "\CRTI\doneProcessing.txt")
+   FileWriteLine($file, "set path=" & $path)
+   FileWriteLine($file, "set lookForFile=%path%\CRTI\doneProcessing.txt")
    FileWriteLine($file, "echo Processing...")
    FileWriteLine($file, ":CheckForFile")
    FileWriteLine($file, "IF EXIST %lookForFile% GOTO FoundIt")
-   FileWriteLine($file, "TIMEOUT /T 5 >nul")
+   FileWriteLine($file, "TIMEOUT /T 3 >nul")
    FileWriteLine($file, "GOTO CheckForFile")
    FileWriteLine($file, ":FoundIt")
    FileWriteLine($file, "ECHO Found: %lookForFile%")
 
    FileClose($file)
 
-   WinWait("Blank Page - Internet Explorer")
-   ShellExecute($path & "\CRTI\Tools\checkForFile.bat")
-   ProcessWaitClose("cmd.exe")
+   WinWait("Blank Page - Internet Explorer", "", 5)
+   If WinExists("Blank Page - Internet Explorer") Then
+	  ShellExecute($path & "\CRTI\Tools\checkForFile.bat")
+	  ProcessWaitClose("cmd.exe")
+   Else
+	  MsgBox("", "CRTI", "Something went wrong when launching the tool.")
+	  Return
+   EndIf
    FileDelete($path & "\CRTI\Tools\checkForFile.bat")
 
    Sleep(1000)
    ; Close vbs window
    WinClose("Blank Page - Internet Explorer")
 
+   ; NOTE ================================================================ Reformat to batch script for consistency?
    ; Move files to server and delete extra files
-   Run("cmd.exe", "", @SW_HIDE, $RUN_CREATE_NEW_CONSOLE)
-   WinWait($path & "\WINDOWS\SYSTEM32\cmd.exe")
-   WinActivate($path & "\WINDOWS\SYSTEM32\cmd.exe")
+   Run("cmd.exe", "", @SW_SHOW, $RUN_CREATE_NEW_CONSOLE)
+   WinWait($path & "\WINDOWS\SYSTEM32\cmd.exe", "", 5)
+   If WinExists($path & "\WINDOWS\SYSTEM32\cmd.exe") Then
+	  WinActivate($path & "\WINDOWS\SYSTEM32\cmd.exe")
+   Else
+	  MsgBox("", "CRTI", "Something went wrong when opening the cmd prompt")
+	  Return
+   EndIf
 
    If $paramTool = "CMSummary" Or $paramTool = "UnitSummary" Then
-	  Send("robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $paramFilename & "-out.xml")
+	  Send("C:\Windows\System32\robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $name & "-out.xml")
 	  Send("{ENTER}")
-	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $paramFilename & "-out.xml")
+	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & "-out.xml")
 	  Send("{ENTER}")
    ElseIf $paramTool = "RecipeSummary" Then
-	  Send("robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $paramFilename & "-PHASES.xml")
+	  Send("C:\Windows\System32\robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $name & "-PHASES.xml")
 	  Send("{ENTER}")
-	  Send("robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $paramFilename & "-RECIPES.xml")
+	  Send("C:\Windows\System32\robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $name & "-RECIPES.xml")
 	  Send("{ENTER}")
-	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $paramFilename & "-PHASES.xml")
+	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & "-PHASES.xml")
 	  Send("{ENTER}")
-	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $paramFilename & "-RECIPES.xml")
+	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & "-RECIPES.xml")
 	  Send("{ENTER}")
    EndIf
    Send("del{SPACE}" & $path & "\CRTI\doneProcessing.txt")
    Send("{ENTER}")
-   Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $paramFilename & ".fhx")
+   Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & ".fhx")
    Send("{ENTER}")
-   Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\temp\" & $paramFilename & ".xml")
+   Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\temp\" & $name & ".xml")
+   Send("{ENTER}")
 
    ProcessClose("cmd.exe")
    ProcessWaitClose("cmd.exe")
@@ -1328,15 +1323,14 @@ Func DragNDropToolWrapper($paramTool, $paramFilename)
 		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 	  Else
 		 CleanUp()
-		 If $size = 1 Then
+		 If NOT StringInStr($paramFilename, ", ") Then
 			RunDragNDropTool($paramTool, $paramFilename)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 		 Else
-			For $i = 2 To $size
-			   $paramFilename = $multiFileArray[$i]
-			   $paramFilename = StringLeft($paramFilename, StringInStr($paramFilename, ".", Default, -1) - 1)
-			   RunDragNDropTool($paramTool, $paramFilename)
-			   If $i = $size Then
+			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
+			For $i = 1 To $array[0]
+			   RunDragNDropTool($paramTool, $array[$i])
+			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 			   EndIf
 			Next
@@ -1349,30 +1343,43 @@ EndFunc
 ; Run tool
 Func RunDiffTool($paramFile1, $paramFile2)
 
-   Local $file = FileOpen($path & "\CRTI\Tools\runDiffTool.bat", 2)
+   Local $drive1, $dir1, $name1, $extension1
+   _PathSplit($paramFile1, $drive1, $dir1, $name1, $extension1)
+   Local $drive2, $dir2, $name2, $extension2
+   _PathSplit($paramFile2, $drive2, $dir2, $name2, $extension2)
 
-   FileWriteLine($file, "@echo off")
-   FileWriteLine($file, "cls")
-   FileWriteLine($file, "call " & $path & "\CRTI\Tools\CLITools\ShowDiff.bat " & $path & "\CRTI\FHXFiles\" & $paramFile1 & ".fhx " & $path & "\CRTI\FHXFiles\" & $paramFile2 & ".fhx > " & $path & "\CRTI\TempResults\FHXDiffTool\" & $paramFile1 & "-" & $paramFile2 & "(diff).txt")
-   FileWriteLine($file, "echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
-
-   FileClose($file)
-   ShellExecute($path & "\CRTI\Tools\runDiffTool.bat")
-   ProcessWaitClose("cmd.exe")
-   FileDelete($path & "\CRTI\Tools\runDiffTool.bat")
-
-   ; Check for tool error
-   Local $returnVal, $errorMsg
-   getReturnVal($returnVal)
-   If Not ($returnVal = 0) Then
-	  MakeErrorMsg($returnVal, $errorMsg)
-	  MsgBox($MB_SYSTEMMODAL, "CRTI", $errorMsg)
+   Run("cmd.exe")
+   WinWaitActive("C:\WINDOWS\SYSTEM32\cmd.exe", "", 10)
+   If Not WinActive("C:\WINDOWS\SYSTEM32\cmd.exe") Then
+	  MsgBox("", "CRTI", "Something went wrong when opening cmd")
 	  Return
    EndIf
 
+   Send("call " & $path & "\CRTI\Tools\CLITools\ShowDiff.bat " & $paramFile1 & " " & StringTrimLeft($paramFile2, 1) & " > " & $path & "\CRTI\TempResults\FHXDiffTool\" & $name1 & "-" & $name2 & "-diff.txt")
+   Send("{ENTER}")
+   Send("echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
+   Send("{ENTER}")
+
+   ProcessWaitClose("cmd.exe")
+
+   ; NOTE ============================== currently terminates before able to record return value
+   ; Check for tool error
+   ;Local $returnVal, $errorMsg
+   ;getReturnVal($returnVal)
+   ;If Not ($returnVal = 0) Then
+	;  MakeErrorMsg($returnVal, $errorMsg)
+	;  MsgBox($MB_SYSTEMMODAL, "CRTI", $errorMsg)
+	;  Return
+   ;EndIf
+
    Local $file2 = FileOpen($path & "\CRTI\Tools\copyFile.bat", 2)
-   FileWriteLine($file2, "robocopy " & $path & "\CRTI\TempResults\FHXDiffTool\ " & $server & "\CRTI\Results\FHXDiffTool\ " & $paramFile1 & "-" & $paramFile2 & "(diff).txt")
-   FileWriteLine($file2, "del " & $path & "\CRTI\TempResults\FHXDiffTool\" & $paramFile1 & "-" & $paramFile2 & "(diff).txt")
+   FileWriteLine($file2, "set path=" & $path)
+   FileWriteLine($file2, "set server=" & $server)
+   FileWriteLine($file2, "set name1=" & $name1)
+   FileWriteLine($file2, "set name2=" & $name2)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXDiffTool\ %server%\CRTI\Results\FHXDiffTool\ %name1%-%name2%-diff.txt")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXDiffTool\%name1%-%name2%-diff.txt")
+
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1381,13 +1388,15 @@ Func RunDiffTool($paramFile1, $paramFile2)
 
 EndFunc
 
-Func DiffToolWrapper($paramFile1, $paramFile2)
+; NOTE =================== Currently only takes 2 files
+Func DiffToolWrapper($paramFiles)
 
    If $fileName = "" Then
-	  MsgBox($MB_SYSTEMMODAL, "CRTI", "Please choose an even number of files.")
+	  MsgBox($MB_SYSTEMMODAL, "CRTI", "Please choose two files.")
    Else
-	  If $size = 1 Or ($size > 1 And Mod($size, 2) = 0) Then
-		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Please choose an even number of files.")
+	  Local $array[$ARR_SIZE] = StringSplit($paramFiles, ",")
+	  If NOT ($array[0] = 2) Then
+		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Please choose two files.")
 	  Else
 		 Local $msg = MsgBox($MB_OKCANCEL, "CRTI", "Start operation.")
 
@@ -1395,17 +1404,10 @@ Func DiffToolWrapper($paramFile1, $paramFile2)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 		 Else
 			CleanUp()
-			For $i = 2 To $size
-			   $paramFile1 = $multiFileArray[$i]
-			   $paramFile1 = StringLeft($paramFile1, StringInStr($paramFile1, ".", Default, -1) - 1)
-			   $paramFile2 = $multiFileArray[$i+1]
-			   $paramFile2 = StringLeft($paramFile2, StringInStr($paramFile2, ".", Default, -1) - 1)
-			   RunDiffTool($paramFile1, $paramFile2)
-			   $i = $i + 1
-			   If $i = $size Then
-				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
-			   EndIf
-			Next
+			Local $paramFile1 = $array[1]
+			Local $paramFile2 = $array[2]
+			RunDiffTool($paramFile1, $paramFile2)
+			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 		 EndIf
 	  EndIf
    EndIf
@@ -1415,12 +1417,19 @@ EndFunc
 ; Run tool
 Func RunRecParamExtract($paramFilename)
 
+   Local $drive, $dir, $name, $extension
+   _PathSplit($paramFilename, $drive, $dir, $name, $extension)
+
    Local $oExcel = _Excel_Open(True, False, True, True)
    Local $oBook = _Excel_BookOpen($oExcel, $path & "\CRTI\Tools\ExcelMacros\RecipeParamExtraction.xlsm")
 
    ProcessWait("excel.exe")
    WinActivate("RecipeParamExtraction - Excel")
-   WinWaitActive("RecipeParamExtraction - Excel")
+   WinWaitActive("RecipeParamExtraction - Excel", "", 10)
+   If Not WinActive("RecipeParamExtraction - Excel") Then
+	  MsgBox("", "CRTI", "Something went wrong when running the tool.")
+	  Return
+   EndIf
 
    ; Navigate to FHX sheet in Excel
    Send("{F5}")
@@ -1430,10 +1439,14 @@ Func RunRecParamExtract($paramFilename)
    Send("a1{ENTER}")
 
    ; Copy contents of fhx file from notepad
-   Run("notepad.exe " & $path & "\CRTI\FHXFiles\" & $paramFilename & ".fhx", "", @SW_HIDE, $RUN_CREATE_NEW_CONSOLE)
+   Run("notepad.exe " & $paramFilename, "", @SW_SHOW, $RUN_CREATE_NEW_CONSOLE)
    ProcessWait("notepad.exe")
-   WinActivate($paramFilename & " - Notepad")
-   WinWaitActive($paramFilename & " - Notepad")
+   WinActivate($name & " - Notepad")
+   WinWaitActive($name & " - Notepad", "", 10)
+   If Not WinActive($name & " - Notepad") Then
+	  MsgBox("", "CRTI", "Something went wrong when running the tool.")
+	  Return
+   EndIf
    Send("^a")
    Send("^c")
    ProcessClose("notepad.exe")
@@ -1441,7 +1454,11 @@ Func RunRecParamExtract($paramFilename)
 
    ; Paste contents from fhx file into column A
    WinActivate("RecipeParamExtraction - Excel")
-   WinWaitActive("RecipeParamExtraction - Excel")
+   WinWaitActive("RecipeParamExtraction - Excel", "", 10)
+   If Not WinActive("RecipeParamExtraction - Excel") Then
+	  MsgBox("", "CRTI", "Something went wrong when running the tool.")
+	  Return
+   EndIf
    Send("^g")
    Send("a1{ENTER}")
    Send("^{SPACE}")
@@ -1470,14 +1487,16 @@ Func RunRecParamExtract($paramFilename)
    Local $file = FileOpen($path & "\CRTI\Tools\createExcel.bat", 2)
    FileWriteLine($file, "@echo off")
    FileWriteLine($file, "cls")
-   FileWriteLine($file, "copy " & $path & "\CRTI\TempResults\FHXRecipeParamExtraction\blankWorksheet_(DO_NOT_DELETE).xlsx " & $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $paramFilename & ".xlsx")
+   FileWriteLine($file, "set path=" & $path)
+   FileWriteLine($file, "set name=" & $name)
+   FileWriteLine($file, "copy %path%\CRTI\TempResults\FHXRecipeParamExtraction\blankWorksheet_(DO_NOT_DELETE).xlsx %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%.xlsx")
    FileClose($file)
 
    ShellExecute($path & "\CRTI\Tools\createExcel.bat", "")
    ProcessWaitClose("cmd.exe")
    FileDelete($path & "\CRTI\Tools\createExcel.bat")
 
-   Local $oBook2 = _Excel_BookOpen($oExcel, $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $paramFilename & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel, $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $name & ".xlsx")
    Local $oCopiedSheet = _Excel_SheetCopyMove($oBook, $oBook.Sheets(2), $oBook2)
 
    $oCopiedSheet.Name = "Results"
@@ -1486,8 +1505,11 @@ Func RunRecParamExtract($paramFilename)
 
    ; Move file to server results folder
    Local $file2 = FileOpen($path & "\CRTI\Tools\movFile.bat", 2)
-   FileWriteLine($file2, "robocopy " & $path & "\CRTI\TempResults\FHXRecipeParamExtraction\ " & $server & "\CRTI\Results\FHXRecipeParamExtraction\ " & $paramFilename & ".xlsx")
-   FileWriteLine($file2, "del " & $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $paramFilename & ".xlsx")
+   FileWriteLine($file2, "set path=" & $path)
+   FileWriteLine($file2, "set server=" & $server)
+   FileWriteLine($file2, "set name=" & $name)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecipeParamExtraction\ %server%\CRTI\Results\FHXRecipeParamExtraction\ %name%.xlsx")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%.xlsx")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\movFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1506,15 +1528,14 @@ Func RecParamExtractWrapper($paramFilename)
 		 MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 	  Else
 		 CleanUp()
-		 If $size = 1 Then
+		 If NOT StringInStr($paramFilename, ", ") Then
 			RunRecParamExtract($paramFilename)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 		 Else
-			For $i = 2 To $size
-			   $paramFilename = $multiFileArray[$i]
-			   $paramFilename = StringLeft($paramFilename, StringInStr($paramFilename, ".", Default, -1) - 1)
-			   RunRecParamExtract($paramFilename)
-			   If $i = $size Then
+			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
+			For $i = 1 To $array[0]
+			   RunRecParamExtract($array[$i])
+			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
 			   EndIf
 			Next
