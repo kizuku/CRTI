@@ -569,7 +569,6 @@ EndFunc
 ; Creates and runs a batch file for normal tool format
 Func CreateBatchFile($paramTool, $paramFilename)
 
-   ; NOTE ============================================================ START REFORMATTING FILE PATHS
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
@@ -658,10 +657,6 @@ Func FormatExcel ($paramTool, $paramFilename)
    FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%.csv")
    FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%(%datetime%).xlsx")
 
-
-   ;FileWriteLine($file, "pause") ; NOTE ====================================
-
-
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -697,7 +692,6 @@ Func BaseCLIWrapper($paramTool, $paramFilename)
 			EndIf
 
 		 Else ; Multiple files case
-			; NOTE ============================================================ CODE FOR MULTI FILE SUPPORT GOES HERE
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
 
@@ -731,6 +725,9 @@ Func RunRecTree($paramFilename)
 
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
+
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
 
    Local $file = FileOpen($path & "\CRTI\Tools\crtiFhxToRaw.bat", 2)
 
@@ -770,7 +767,10 @@ Func RunRecTree($paramFilename)
 	  Send("{DOWN}")
 	  Send("o")
 	  Send("e")
-	  Send("{ENTER 2}")
+	  Send("{ENTER}")
+	  Send("+{TAB}")
+	  Send($name & "(" & $datetime & ")")
+	  Send("{ENTER}")
 	  Send("!y")
 
 	  Local $delay = 2000 ;
@@ -782,7 +782,7 @@ Func RunRecTree($paramFilename)
 
    ;Properly size columns
    Local $oExcel2 = _Excel_Open(True, False, True, True)
-   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXRecTree\" & $name & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXRecTree\" & $name & "(" & $datetime & ").xlsx")
 
    ProcessWait("excel.exe")
    WinActivate($windowTitle)
@@ -804,9 +804,10 @@ Func RunRecTree($paramFilename)
    FileWriteLine($file, "set path=" & $path)
    FileWriteLine($file, "set server=" & $server)
    FileWriteLine($file, "set name=" & $name)
-   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecTree\ %server%\CRTI\Results\FHXRecTree\ %name%.xlsx")
+   FileWriteLine($file, "set datetime=" & $datetime)
+   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecTree\ %server%\CRTI\Results\FHXRecTree\ %name%(%datetime%).xlsx")
    FileWriteLine($file, "del %path%\CRTI\TempResults\FHXRecTree\%name%.txt")
-   FileWriteLine($file, "del %path%\CRTI\TempResults\FHXRecTree\%name%.xlsx")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\FHXRecTree\%name%(%datetime%).xlsx")
    FileClose($file)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -853,6 +854,9 @@ Func RunBulkTextProc($paramFilename, $patternFile)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
+
    Run("cmd.exe")
    WinWaitActive("C:\WINDOWS\SYSTEM32\cmd.exe", "", 10)
    If Not WinActive("C:\WINDOWS\SYSTEM32\cmd.exe") Then
@@ -860,7 +864,7 @@ Func RunBulkTextProc($paramFilename, $patternFile)
 	  Return
    EndIf
 
-   Send("call " & $path & "\CRTI\Tools\CLITools\FHXBulkTextProc.exe " & $patternFile & " " & $paramFilename & " > " & $path & "\CRTI\TempResults\FHXBulkTextProc\" & $name & ".fhx")
+   Send("call " & $path & "\CRTI\Tools\CLITools\FHXBulkTextProc.exe " & $patternFile & " " & $paramFilename & " > " & $path & "\CRTI\TempResults\FHXBulkTextProc\" & $name & "(" & $datetime & ").fhx")
    Send("{ENTER}")
    Sleep(1000)
    Send("n")
@@ -885,10 +889,9 @@ Func RunBulkTextProc($paramFilename, $patternFile)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXBulkTextProc\ %server%\CRTI\Results\FHXBulkTextProc\ %name%.fhx")
-   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXBulkTextProc\%name%.fhx")
-
-   FileWriteLine($file2, "pause")
+   FileWriteLine($file2, "set datetime=" & $datetime)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXBulkTextProc\ %server%\CRTI\Results\FHXBulkTextProc\ %name%(%datetime%).fhx")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXBulkTextProc\%name%(%datetime%).fhx")
 
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
@@ -948,6 +951,9 @@ Func RunFHXSearch($paramFilename, $paramText)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
+
    Local $file = FileOpen($path & "\CRTI\Tools\runFHXSearch.bat", 2)
 
    FileWriteLine($file, "@echo off")
@@ -956,7 +962,8 @@ Func RunFHXSearch($paramFilename, $paramText)
    FileWriteLine($file, "set name=" & $name)
    FileWriteLine($file, "set text=" & $paramText)
    FileWriteLine($file, "set path=" & $path)
-   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXSearch %file% %text% > %path%\CRTI\TempResults\FHXSearch\%name%.txt")
+   FileWriteLine($file, "set datetime=" & $datetime)
+   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXSearch %file% %text% > %path%\CRTI\TempResults\FHXSearch\%name%(%datetime%).txt")
    FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
 
    FileClose($file)
@@ -976,8 +983,9 @@ Func RunFHXSearch($paramFilename, $paramText)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXSearch\ %server%\CRTI\Results\FHXSearch\ %name%.txt")
-   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXSearch\%name%.txt")
+   FileWriteLine($file2, "set datetime=" & $datetime)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXSearch\ %server%\CRTI\Results\FHXSearch\ %name%(%datetime%).txt")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXSearch\%name%(%datetime%).txt")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1043,6 +1051,9 @@ Func RunFHXUnlinkInstConfig($paramFilename)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
+
    Local $file = FileOpen($path & "\CRTI\Tools\runUnlinkInstConfig.bat", 2)
 
    FileWriteLine($file, "@echo off")
@@ -1050,7 +1061,8 @@ Func RunFHXUnlinkInstConfig($paramFilename)
    FileWriteLine($file, "set file=" & $paramFilename)
    FileWriteLine($file, "set name=" & $name)
    FileWriteLine($file, "set path=" & $path)
-   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXUnlinkInstConfig %file% > %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%.fhx")
+   FileWriteLine($file, "set datetime=" & $datetime)
+   FileWriteLine($file, "call %path%\CRTI\Tools\CLITools\FHXUnlinkInstConfig %file% > %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%(%datetime%).fhx")
    FileWriteLine($file, "echo %ERRORLEVEL% > %path%\CRTI\returnVal.txt")
 
    FileClose($file)
@@ -1070,8 +1082,9 @@ Func RunFHXUnlinkInstConfig($paramFilename)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXUnlinkInstConfig\ %server%\CRTI\Results\FHXUnlinkInstConfig\ %name%.fhx")
-   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%.fhx")
+   FileWriteLine($file2, "set datetime=" & $datetime)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXUnlinkInstConfig\ %server%\CRTI\Results\FHXUnlinkInstConfig\ %name%(%datetime%).fhx")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXUnlinkInstConfig\%name%(%datetime%).fhx")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1119,6 +1132,9 @@ Func RunModParamsBuildOPC($paramFilename)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
+
    Local $file = FileOpen($path & "\CRTI\Tools\runModParamsBuildOPC.bat", 2)
 
    FileWriteLine($file, "@echo off")
@@ -1156,7 +1172,10 @@ Func RunModParamsBuildOPC($paramFilename)
 	  Send("{DOWN}")
 	  Send("o")
 	  Send("e")
-	  Send("{ENTER 2}")
+	  Send("{ENTER}")
+	  Send("+{TAB}")
+	  Send($name & "(" & $datetime & ")")
+	  Send("{ENTER}")
 	  Send("!y")
 
 	  Local $delay = 2000 ;
@@ -1173,7 +1192,8 @@ Func RunModParamsBuildOPC($paramFilename)
    FileWriteLine($file2, "cls")
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\FHXFiles\ %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %name%.xlsx")
+   FileWriteLine($file2, "set datetime=" & $datetime)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\FHXFiles\ %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %name%(%datetime%).xlsx")
 
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\delFile.bat")
@@ -1181,7 +1201,7 @@ Func RunModParamsBuildOPC($paramFilename)
    FileDelete($path & "\CRTI\Tools\delFile.bat")
 
    Local $oExcel2 = _Excel_Open(True, False, True, True) ; Works: FFTT
-   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXModParamsBuildOPC\" & $name & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\FHXModParamsBuildOPC\" & $name & "(" & $datetime & ").xlsx")
 
    ProcessWait("excel.exe")
    WinActivate($windowTitle)
@@ -1202,10 +1222,11 @@ Func RunModParamsBuildOPC($paramFilename)
    FileWriteLine($file3, "set path=" & $path)
    FileWriteLine($file3, "set server=" & $server)
    FileWriteLine($file3, "set name=" & $name)
-   FileWriteLine($file3, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %server%\CRTI\Results\FHXModParamsBuildOPC\ %name%.xlsx")
-   FileWriteLine($file3, "del %path%\CRTI\TempResults\FHXModParamsBuildOPC\%name%.xlsx")
+   FileWriteLine($file3, "set datetime=" & $datetime)
+   FileWriteLine($file3, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXModParamsBuildOPC\ %server%\CRTI\Results\FHXModParamsBuildOPC\ %name%(%datetime%).xlsx")
+   FileWriteLine($file3, "del %path%\CRTI\TempResults\FHXModParamsBuildOPC\%name%(%datetime%).xlsx")
    FileWriteLine($file3, "del %path%\CRTI\FHXFiles\%name%.txt")
-   FileWriteLine($file3, "del %path%\CRTI\FHXFiles\%name%.xlsx")
+   FileWriteLine($file3, "del %path%\CRTI\FHXFiles\%name%(%datetime%).xlsx")
    FileClose($file3)
    ShellExecute($path & "\CRTI\Tools\movFile.bat")
    ProcessWaitClose("cmd.exe")
@@ -1246,10 +1267,13 @@ Func ModParamsBuildOPCWrapper($paramFilename)
 EndFunc
 
 ; Run tool
-Func RunDragNDropTool($paramTool, $paramFilename)
+Func RunDragNDropTool($paramTool, $paramFilename) ; NOTE ================= NEED TO INCLUDE DATETIME SOMEHOW
 
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
+
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
 
    MsgBox("", "CRTI", "If a security warning to open the file appears, please open it.")
 
@@ -1320,6 +1344,8 @@ Func RunDragNDropTool($paramTool, $paramFilename)
 	  Send("{ENTER}")
 	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & "-out.xml")
 	  Send("{ENTER}")
+	  Send("RENAME " & $server & "\CRTI\Results\FHX" & $paramTool & "\" & $name & "-out.xml " & $name & "-out(" & $datetime & ").xml")
+	  Send("{ENTER}")
    ElseIf $paramTool = "RecipeSummary" Then
 	  Send("C:\Windows\System32\robocopy{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\ " & $server & "\CRTI\Results\FHX" & $paramTool & "\ " & $name & "-PHASES.xml")
 	  Send("{ENTER}")
@@ -1329,6 +1355,10 @@ Func RunDragNDropTool($paramTool, $paramFilename)
 	  Send("{ENTER}")
 	  Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\" & $name & "-RECIPES.xml")
 	  Send("{ENTER}")
+	  Send("RENAME " & $server & "\CRTI\Results\FHX" & $paramTool & "\" & $name & "-PHASES.xml " & $name & "(" & $datetime & ")-PHASES.xml")
+	  Send("{ENTER}")
+	  Send("RENAME " & $server & "\CRTI\Results\FHX" & $paramTool & "\" & $name & "-RECIPES.xml " & $name & "(" & $datetime & ")-RECIPES.xml")
+	  Send("{ENTER}")
    EndIf
    Send("del{SPACE}" & $path & "\CRTI\doneProcessing.txt")
    Send("{ENTER}")
@@ -1336,8 +1366,9 @@ Func RunDragNDropTool($paramTool, $paramFilename)
    Send("{ENTER}")
    Send("del{SPACE}" & $path & "\CRTI\Tools\DragNDropTools\" & $paramTool & "\temp\" & $name & ".xml")
    Send("{ENTER}")
+   Send("exit")
+   Send("{ENTER}")
 
-   ProcessClose("cmd.exe")
    ProcessWaitClose("cmd.exe")
 
 EndFunc
@@ -1379,8 +1410,13 @@ Func RunDiffTool($paramFile1, $paramFile2)
 
    Local $drive1, $dir1, $name1, $extension1
    _PathSplit($paramFile1, $drive1, $dir1, $name1, $extension1)
+   Local $datetime1 = FileGetTime($paramFile1, 0, 1)
+   $datetime1 = StringMid($datetime1, 5, 2) & "_" & StringMid($datetime1, 7, 2) & "_" & StringMid($datetime1, 1, 4) & "_" & StringMid($datetime1, 9, 2) & "_" & StringMid($datetime1, 11, 2) & "_" & StringMid($datetime1, 13, 2)
+
    Local $drive2, $dir2, $name2, $extension2
    _PathSplit($paramFile2, $drive2, $dir2, $name2, $extension2)
+   Local $datetime2 = FileGetTime($paramFile2, 0, 1)
+   $datetime2 = StringMid($datetime2, 5, 2) & "_" & StringMid($datetime2, 7, 2) & "_" & StringMid($datetime2, 1, 4) & "_" & StringMid($datetime2, 9, 2) & "_" & StringMid($datetime2, 11, 2) & "_" & StringMid($datetime2, 13, 2)
 
    Run("cmd.exe")
    WinWaitActive("C:\WINDOWS\SYSTEM32\cmd.exe", "", 10)
@@ -1389,7 +1425,7 @@ Func RunDiffTool($paramFile1, $paramFile2)
 	  Return
    EndIf
 
-   Send("call " & $path & "\CRTI\Tools\CLITools\ShowDiff.bat " & $paramFile1 & " " & StringTrimLeft($paramFile2, 1) & " > " & $path & "\CRTI\TempResults\FHXDiffTool\" & $name1 & "-" & $name2 & "-diff.txt")
+   Send("call " & $path & "\CRTI\Tools\CLITools\ShowDiff.bat " & $paramFile1 & " " & StringTrimLeft($paramFile2, 1) & " > " & $path & "\CRTI\TempResults\FHXDiffTool\" & $name1 & "(" & $datetime1 & ")-" & $name2 & "(" & $datetime2 & ")-diff.txt")
    Send("{ENTER}")
    Send("echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
    Send("{ENTER}")
@@ -1411,8 +1447,10 @@ Func RunDiffTool($paramFile1, $paramFile2)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name1=" & $name1)
    FileWriteLine($file2, "set name2=" & $name2)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXDiffTool\ %server%\CRTI\Results\FHXDiffTool\ %name1%-%name2%-diff.txt")
-   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXDiffTool\%name1%-%name2%-diff.txt")
+   FileWriteLine($file2, "set datetime1=" & $datetime1)
+   FileWriteLine($file2, "set datetime2=" & $datetime2)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXDiffTool\ %server%\CRTI\Results\FHXDiffTool\ %name1%(%datetime1%)-%name2%(%datetime2%)-diff.txt")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXDiffTool\%name1%(%datetime1%)-%name2%(%datetime2%)-diff.txt")
 
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\copyFile.bat")
@@ -1457,6 +1495,9 @@ Func RunRecParamExtract($paramFilename)
 
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
+
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
 
    Local $oExcel = _Excel_Open(True, False, True, True)
    Local $oBook = _Excel_BookOpen($oExcel, $path & "\CRTI\Tools\ExcelMacros\RecipeParamExtraction.xlsm")
@@ -1527,14 +1568,15 @@ Func RunRecParamExtract($paramFilename)
    FileWriteLine($file, "cls")
    FileWriteLine($file, "set path=" & $path)
    FileWriteLine($file, "set name=" & $name)
-   FileWriteLine($file, "copy %path%\CRTI\TempResults\FHXRecipeParamExtraction\blankWorksheet_(DO_NOT_DELETE).xlsx %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%.xlsx")
+   FileWriteLine($file, "set datetime=" & $datetime)
+   FileWriteLine($file, "copy %path%\CRTI\TempResults\FHXRecipeParamExtraction\blankWorksheet_(DO_NOT_DELETE).xlsx %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%(%datetime%).xlsx")
    FileClose($file)
 
    ShellExecute($path & "\CRTI\Tools\createExcel.bat", "")
    ProcessWaitClose("cmd.exe")
    FileDelete($path & "\CRTI\Tools\createExcel.bat")
 
-   Local $oBook2 = _Excel_BookOpen($oExcel, $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $name & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel, $path & "\CRTI\TempResults\FHXRecipeParamExtraction\" & $name & "(" & $datetime & ").xlsx")
    Local $oCopiedSheet = _Excel_SheetCopyMove($oBook, $oBook.Sheets(2), $oBook2)
 
    $oCopiedSheet.Name = "Results"
@@ -1546,8 +1588,9 @@ Func RunRecParamExtract($paramFilename)
    FileWriteLine($file2, "set path=" & $path)
    FileWriteLine($file2, "set server=" & $server)
    FileWriteLine($file2, "set name=" & $name)
-   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecipeParamExtraction\ %server%\CRTI\Results\FHXRecipeParamExtraction\ %name%.xlsx")
-   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%.xlsx")
+   FileWriteLine($file2, "set datetime=" & $datetime)
+   FileWriteLine($file2, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\FHXRecipeParamExtraction\ %server%\CRTI\Results\FHXRecipeParamExtraction\ %name%(%datetime%).xlsx")
+   FileWriteLine($file2, "del %path%\CRTI\TempResults\FHXRecipeParamExtraction\%name%(%datetime%).xlsx")
    FileClose($file2)
    ShellExecute($path & "\CRTI\Tools\movFile.bat")
    ProcessWaitClose("cmd.exe")
