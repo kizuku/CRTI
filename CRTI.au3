@@ -598,6 +598,9 @@ Func FormatExcel ($paramTool, $paramFilename)
    Local $drive, $dir, $name, $extension
    _PathSplit($paramFilename, $drive, $dir, $name, $extension)
 
+   Local $datetime = FileGetTime($paramFilename, 0, 1)
+   $datetime = StringMid($datetime, 5, 2) & "_" & StringMid($datetime, 7, 2) & "_" & StringMid($datetime, 1, 4) & "_" & StringMid($datetime, 9, 2) & "_" & StringMid($datetime, 11, 2) & "_" & StringMid($datetime, 13, 2)
+
    Local $windowTitle = $name & " - Excel"
    Local $oExcel = _Excel_Open(True, False, True, True)  ; Works: FFTT
    Local $oBook = _Excel_BookOpen($oExcel, $path & "\CRTI\TempResults\" & $paramTool & "\" & $name & ".csv")
@@ -612,7 +615,10 @@ Func FormatExcel ($paramTool, $paramFilename)
 	  Send("{DOWN}")
 	  Send("o")
 	  Send("e")
-	  Send("{ENTER 2}")
+	  Send("{ENTER}")
+	  Send("+{TAB}")
+	  Send($name & "(" & $datetime & ")")
+	  Send("{ENTER}")
 	  Send("!y")
 
 	  Local $delay = 2000 ;
@@ -624,7 +630,7 @@ Func FormatExcel ($paramTool, $paramFilename)
 
    ;Properly size columns
    Local $oExcel2 = _Excel_Open(True, False, True, True) ; Works: FFTT
-   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\" & $paramTool & "\" & $name & ".xlsx")
+   Local $oBook2 = _Excel_BookOpen($oExcel2, $path & "\CRTI\TempResults\" & $paramTool & "\" & $name & "(" & $datetime & ").xlsx")
 
    ProcessWait("excel.exe")
    WinActivate($windowTitle)
@@ -647,9 +653,10 @@ Func FormatExcel ($paramTool, $paramFilename)
    FileWriteLine($file, "set server=" & $server)
    FileWriteLine($file, "set tool=" & $paramTool)
    FileWriteLine($file, "set name=" & $name)
-   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\%tool%\ %server%\CRTI\Results\%tool%\ %name%.xlsx")
+   FileWriteLine($file, "set datetime=" & $datetime)
+   FileWriteLine($file, "C:\Windows\System32\robocopy %path%\CRTI\TempResults\%tool%\ %server%\CRTI\Results\%tool%\ %name%(%datetime%).xlsx")
    FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%.csv")
-   FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%.xlsx")
+   FileWriteLine($file, "del %path%\CRTI\TempResults\%tool%\%name%(%datetime%).xlsx")
 
 
    ;FileWriteLine($file, "pause") ; NOTE ====================================
@@ -675,7 +682,6 @@ Func BaseCLIWrapper($paramTool, $paramFilename)
 		 CleanUp()
 		 ; Single file case
 		 If NOT StringInStr($paramFilename, ", ") Then
-
 			CreateBatchFile($paramTool, $paramFilename)
 
 			; Check for tool error
@@ -691,10 +697,14 @@ Func BaseCLIWrapper($paramTool, $paramFilename)
 			EndIf
 
 		 Else ; Multiple files case
-
 			; NOTE ============================================================ CODE FOR MULTI FILE SUPPORT GOES HERE
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   ;MsgBox("", "", $i & ": " & $array[$i]) ; Displays each file chosen
 
 			   CreateBatchFile($paramTool, $array[$i])
@@ -822,6 +832,10 @@ Func RecTreeWrapper($paramFilename)
 			For $i = 1 To $array[0]
 			   ;MsgBox("", "", $i & ": " & $array[$i]) ; Displays each file chosen
 
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunRecTree($array[$i])
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -913,6 +927,10 @@ Func BulkTextProcWrapper($paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunBulkTextProc($array[$i], $patternFile)
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -1004,6 +1022,10 @@ Func FHXSearchWrapper($paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunFHXSearch($array[$i], $textPattern)
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -1076,6 +1098,10 @@ Func FHXUnlinkInstConfigWrapper($paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunFHXUnlinkInstConfig($array[$i])
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -1204,6 +1230,10 @@ Func ModParamsBuildOPCWrapper($paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunModParamsBuildOPC($array[$i])
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -1329,6 +1359,10 @@ Func DragNDropToolWrapper($paramTool, $paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunDragNDropTool($paramTool, $array[$i])
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
@@ -1404,6 +1438,10 @@ Func DiffToolWrapper($paramFiles)
 			MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation cancelled.")
 		 Else
 			CleanUp()
+			If StringLeft($array[2], 1) = " " Then
+			   $array[2] = StringTrimLeft($array[2], 1)
+			EndIf
+
 			Local $paramFile1 = $array[1]
 			Local $paramFile2 = $array[2]
 			RunDiffTool($paramFile1, $paramFile2)
@@ -1534,6 +1572,10 @@ Func RecParamExtractWrapper($paramFilename)
 		 Else
 			Local $array[$ARR_SIZE] = StringSplit($paramFilename, ",")
 			For $i = 1 To $array[0]
+			   If StringLeft($array[$i], 1) = " " Then
+				  $array[$i] = StringTrimLeft($array[$i], 1)
+			   EndIf
+
 			   RunRecParamExtract($array[$i])
 			   If $i = $array[0] Then
 				  MsgBox($MB_SYSTEMMODAL, "CRTI", "Operation complete.")
