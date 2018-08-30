@@ -47,6 +47,16 @@ Func MainApp()
    Global $path = "C:"   ; Path for running on user machine
    Global $server = "\\OCN-PCSDEVDOC01\Reports"  ; Server path where results are stored
 
+   ; Create child window for use cases
+   Local $useCaseGUI
+   $useCaseGUI = GUICreate("Tool Use Cases", 600, 400)
+   GUISetState(@SW_HIDE)
+
+   Local $useCaseLabel = GUICtrlCreateLabel("Click a use case to see which tools are applicable for it.", 10, 10, 500, 20)
+   GUICtrlSetFont($useCaseLabel, 14, $FW_BOLD)
+   Local $testButton = GUICtrlCreateButton("Recipe Parameter Deferral", 10, 50)
+
+
    ; Create normal window 1366 x 768 resolution
    $GUI = GUICreate("Code Review Tools Interface", 1366, 768)
    GUISetState(@SW_SHOW)
@@ -74,23 +84,29 @@ Func MainApp()
    GUICtrlSetBkColor($sideBarText, $COLOR_SIDEBAR)
 
    GUISetFont(12, $FW_NORMAL)
-   Local $fhxButton = GUICtrlCreateButton("FHX Files", 16, 106, 118, 26)
+   Local $fhxButton = GUICtrlCreateButton("FHX Files", 16, 106, 118, 30)
    GUICtrlSetState($fhxButton, $GUI_SHOW)
    GUICtrlSetColor($fhxButton, $COLOR_WHITE)
    GUICtrlSetBkColor($fhxButton, $COLOR_SIDEBAR)
    GUICtrlSetCursor($fhxButton, 0)
 
-   Local $resultsButton = GUICtrlCreateButton("Results", 31, 150, 94, 30)
+   Local $resultsButton = GUICtrlCreateButton("Results", 31, 156, 94, 30)
    GUICtrlSetState($resultsButton, $GUI_SHOW)
    GUICtrlSetColor($resultsButton, $COLOR_WHITE)
    GUICtrlSetBkColor($resultsButton, $COLOR_SIDEBAR)
    GUICtrlSetCursor($resultsButton, 0)
 
-   Local $readmeButton = GUICtrlCreateButton("README", 31, 194, 94, 30)
+   Local $readmeButton = GUICtrlCreateButton("README", 31, 206, 94, 30)
    GUICtrlSetState($readmeButton, $GUI_SHOW)
    GUICtrlSetColor($readmeButton, $COLOR_WHITE)
    GUICtrlSetBkColor($readmeButton, $COLOR_SIDEBAR)
    GUICtrlSetCursor($readmeButton, 0)
+
+   Local $useCasesButton = GUICtrlCreateButton("Use Cases", 35, 256, 86, 30)
+   GUICtrlSetState($useCasesButton, $GUI_SHOW)
+   GUICtrlSetColor($useCasesButton, $COLOR_WHITE)
+   GUICtrlSetBkColor($useCasesButton, $COLOR_SIDEBAR)
+   GUICtrlSetCursor($useCasesButton, 0)
 
    ; Main window content =======================================================================================
    ; Instruction section
@@ -291,6 +307,23 @@ Func MainApp()
 			OpenResults()
 		 Case $readmeButton
 			Run("explorer.exe " & $path & "\crti\readme.txt")
+
+		 ; Child window for use cases
+		 Case $useCasesButton
+			;MsgBox("", "CRTI", "This feature has not yet been implemented")
+			; Use case function goes here
+			GUISetState($GUI_DISABLE, $GUI)
+            GUISetState(@SW_SHOW, $useCaseGUI)
+            While 1
+			   Switch GUIGetMsg()
+				  Case $GUI_EVENT_CLOSE
+					 GUISetState(@SW_HIDE, $useCaseGUI)
+					 GUISetState($GUI_ENABLE, $GUI)
+					 ExitLoop
+				  Case $testButton
+					 MsgBox("", "", "Tools: ")
+			   EndSwitch
+            WEnd
 
 		 ; Main content buttons
 		 Case $fileButton
