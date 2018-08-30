@@ -1,0 +1,34 @@
+Current configuration: tool on user computer, Results on server
+
+DONE:
+Include more tools (list provided by Evelyn)
+  - Add all tools
+  - Implement all tools
+	- Send results for RecParamExtract to proper folder 
+  	- Ask for extra input only once for multiple files 
+	- Tab hierarchy for RecTree 
+Add link to README 
+Cancel operation on exit of start prompt 
+Remove tool headings, include all together 
+Prevent users from uploading more files than allowed 
+Append date to result filenames 
+Enclose file names inside quotes to account for spaces
+
+Close existing Excel and CMD windows before executing (Done?)
+Make Excel file conversion more robust (Done?)
+
+Design Suggestions:
+  - Box around File selection area with colored head bar 
+  - 1 and 2 step numbers around file selection / tool selection zones 
+
+====================================================================================
+INCOMPLETE:
+  - Bug Testing (BulkTextProc not stopping)
+  - Implement file dragndrop?? (not necessary for now)
+  - Somehow notify upon failure for CLI Tools?
+  - Return value error checking of tools (CLI Tools Only)
+  - Different folders for categories (separate parameter for category for file path)
+  - Make tooltips more concise (include use cases)
+  - Make popup windows and buttons along side for different use cases
+  - Automate opening of results folder for MacOS
+	Operating Systems: Take first 3 chars of @OSVersion
