@@ -13,6 +13,7 @@ Remove tool headings, include all together
 Prevent users from uploading more files than allowed 
 Append date to result filenames 
 Enclose file names inside quotes to account for spaces
+Return value error checking of tools
 
 Close existing Excel and CMD windows before executing (Done?)
 Make Excel file conversion more robust (Done?)
@@ -25,8 +26,6 @@ Design Suggestions:
 INCOMPLETE:
   - Bug Testing (BulkTextProc not stopping)
   - Implement file dragndrop?? (not necessary for now)
-  - Somehow notify upon failure for CLI Tools?
-  - Return value error checking of tools (CLI Tools Only)
   - Different folders for categories (separate parameter for category for file path)
   - Make tooltips more concise (include use cases)
   - Make popup windows and buttons along side for different use cases

@@ -1428,20 +1428,18 @@ Func RunDiffTool($paramFile1, $paramFile2)
 
    Send('call ' & $path & '\CRTI\Tools\CLITools\ShowDiff.bat "' & $paramFile1 & '" "' & StringTrimLeft($paramFile2, 0) & '" > "' & $path & '\CRTI\TempResults\FHXDiffTool\' & $name1 & '(' & $datetime1 & ')-' & $name2 & '(' & $datetime2 & ')-diff.txt"')
    Send("{ENTER}")
-   Send("echo %ERRORLEVEL% > " & $path & "\CRTI\returnVal.txt")
-   Send("{ENTER}")
 
    ProcessWaitClose("cmd.exe")
 
    ; NOTE ============================== currently terminates before able to record return value
    ; Check for tool error
-   ;Local $returnVal, $errorMsg
-   ;getReturnVal($returnVal)
-   ;If Not ($returnVal = 0) Then
-	;  MakeErrorMsg($returnVal, $errorMsg)
-	;  MsgBox($MB_SYSTEMMODAL, "CRTI", $errorMsg)
-	;  Return
-   ;EndIf
+   Local $returnVal, $errorMsg
+   getReturnVal($returnVal)
+   If Not ($returnVal = 0) Then
+	  MakeErrorMsg($returnVal, $errorMsg)
+	  MsgBox($MB_SYSTEMMODAL, "CRTI", $errorMsg)
+	  Return
+   EndIf
 
    Local $file2 = FileOpen($path & "\CRTI\Tools\copyFile.bat", 2)
    FileWriteLine($file2, "set path=" & $path)
