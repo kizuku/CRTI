@@ -26,6 +26,8 @@
 #include <Array.au3>
 #include <Excel.au3>
 #include <File.au3>
+#include <GuiListView.au3>
+#include <ListViewConstants.au3>
 
 Opt('MustDeclareVars', 1)
 
@@ -47,15 +49,139 @@ Func MainApp()
    Global $path = "C:"   ; Path for running on user machine
    Global $server = "\\OCN-PCSDEVDOC01\Reports"  ; Server path where results are stored
 
-   ; Create child window for use cases
+
+   ; Create child window for use cases/tool descriptions ======================================================================
    Local $useCaseGUI
-   $useCaseGUI = GUICreate("Tool Use Cases", 600, 400)
+   ;$useCaseGUI = GUICreate("Tool Use Cases", 800, 600)
+   $useCaseGUI = GUICreate("Tool Descriptions", 1400, 600)
    GUISetState(@SW_HIDE)
 
-   Local $useCaseLabel = GUICtrlCreateLabel("Click a use case to see which tools are applicable for it.", 10, 10, 500, 20)
-   GUICtrlSetFont($useCaseLabel, 14, $FW_BOLD)
-   Local $testButton = GUICtrlCreateButton("Recipe Parameter Deferral", 10, 50)
+   ; Use Case UI elements
+   ;Local $useCaseLabel = GUICtrlCreateLabel("Click a use case to see which tools are applicable for it.", 10, 10, 500, 20)
+   ;GUICtrlSetFont($useCaseLabel, 14, $FW_BOLD)
+   ;Local $testButton = GUICtrlCreateButton("Recipe Parameter Deferral", 10, 50)
+   ;GUICtrlSetCursor($testButton, 0)
 
+   ;Local $applicableToolsLabel = GUICtrlCreateLabel("Applicable Tools: None", 10, 450, 790, 150)
+   ;GUICtrlSetFont($applicableToolsLabel, 14, $FW_BOLD)
+
+   ; Tool Description UI Elements
+   Local $tableListview = GUICtrlCreateListView("Tool Name|Tool Description|Reason", 0, 0, 1390, 600, Default, BitOR($LVS_EX_GRIDLINES, $LVS_EX_INFOTIP))
+   _GUICtrllistView_SetColumnWidth($tableListview, 0, 140)
+   _GUICtrlListView_SetColumnWidth($tableListview, 1, 900)
+   _GUICtrlListView_SetColumnWidth($tableListview, 2, 321)
+
+   ; Tool Table Items ============================================================
+   GUICtrlCreateListViewItem("AlarmConfig|Lists all configurable information for the alarms in the FHX: Module, Alarm Name, Alarm Type, Priority, Enable, Inverted, Mon_Attr, Alarm_Attr, Limit_Attr, Param 1,|Helps check the alarm configuration for a set of CMI's.", $tableListview)
+   GUICtrlCreateListViewItem("|Param 2.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("AliasByUnitClass|Verify alias assignment across units. Check alias ignores. Check for wrong class assigned to an alias. Check for unused aliases. Check for redundant aliases in the class.|Helps with bulk unit verification.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("AnalogInfo|List configuration information for analog modules in FHX: Object, Type, Description, Controller, Primary Display, DV Type, DV Sub Type, OUT_EU0, OUT_EU100,|Helps verify configuration prior to loop checks.", $tableListview)
+   GUICtrlCreateListViewItem("|OUT_UNITS, PV_EU0, PV_EU100, PV_UNITS, IO_IN, IO_OUT, L_TYPE.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("AreaLibObjList|Creates a list of all objects in the FHX where each object is tagged with the Area, Process Cell, and Unit. The list includes the library objects (classes, composites) that|By creating Excel Pivot Tables from the data in the", $tableListview)
+   GUICtrlCreateListViewItem("|are used by the object.|resulting file, you can get a list of the shared objects that", $tableListview)
+   GUICtrlCreateListViewItem("||are used in each area or process cell.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("BulkSearchReplace|Performs search/replace within a file using a set of search/replace defined in a separate file. It can replace any number of text patterns with any number of replacement|Can be used as an engineering tool to make updates in", $tableListview)
+   GUICtrlCreateListViewItem("|OUT_UNITS, PV_EU0, PV_EU100, PV_UNITS, IO_IN, IO_OUT, L_TYPE.|an export file.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("DiffTool|Creates a version of the FHX files that are much easier to compare by stripping out lines that are always different but not significant and adding context to every line in|Saves time when comparing FHX files by allowing the ", $tableListview)
+   GUICtrlCreateListViewItem("|the file so, when differences are marked, it is easy to see exactly which DeltaV object they go with.|files to be selected from Windows Explorer and making it", $tableListview)
+   GUICtrlCreateListViewItem("||easy to find exactly where the changes are in the code.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("HistoryParams|List all parameters set up for History collection. All the attributes of the history record are reported.|Helps check history collection configuration.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ModInstanceParams|Listing all module instance parameters and the values set in the instances. Outputs: Module, Module Class, Parameter Name/Path, Parameter Value, Value Set By.|Helps with bulk CMI verification and testing.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ModParamsBuildOPC|List all isntance configurable parameters and the values set in the instances. It adds a formula for getting the realtime value using OPC. Outputs: Module,|Use it to compare instance configured value in the", $tableListview)
+   GUICtrlCreateListViewItem("|Module Class, Parameter Name/Path, Parameter Type, Parameter Value, OPC Formula for DeltaV Addin.|database to the realtime value in the controller. Realtime", $tableListview)
+   GUICtrlCreateListViewItem("||value is read through OPC using the DeltaV Excel Addin.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ModTagList|List component module details: Object, Type, Description, Location/Class, Controller, Primary Display, Instrument Display, Detail Display, DV Type, DV Sub Type,|Offer quick way to check multiple modules on system", $tableListview)
+   GUICtrlCreateListViewItem("|Unit Display, Unit Area, Simulate, Bypass, Alarm Delay On, and Alarm Enable Delay parameters.|prior to testing to verify the properties and key", $tableListview)
+   GUICtrlCreateListViewItem("||parameters are set correctly", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ObjDateAndCheckout|Searches an FHX, for every component that is found in the file, with the last modification date, user who modified it, and the name of the person who has it checked out.|Helps to build DQ record.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ObjDateAndVer|Searches FHX with the last modification date, and the user who modified it for every component in the file.|Helps to see what is checked out prior to trying an import.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ParamList|List all controller parameters(unit, USM) in FHX.|Helps with unit verification. Verify unit and USM", $tableListview)
+   GUICtrlCreateListViewItem("||parameter values.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("ParamMap|Creates a map of the chain of recipe parameters showing how each top level parameter is passed to the levels below.|Helps with reviewing parameter promotion through the", $tableListview)
+   GUICtrlCreateListViewItem("||recipes.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("PhaseAliasUsageDetail|List of all expressions within a phase where aliases are used. It reports the location where the alias is used and the type of use (read/write).|Identifies exactly where in the phase the alias is referenced.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("PhaseParamList|List of recipe and report parameters within a phase. Along with the name, it reports the ID, range, and Eng Units.|Helps with reviewing phases.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("PhaseRecParamUsage|List of all expressions within a phase where the batch parameters are used. It reports the location where the parameter is used and the type of use (read/write).|Allows one to see where a recipe parameter is used to", $tableListview)
+   GUICtrlCreateListViewItem("||check if it is being set to the right value.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("PrepDiff1Line|Look for differences between two FHX files.|Easier to find differences between two versions of an", $tableListview)
+   GUICtrlCreateListViewItem("||FHX file.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("RecParam|Searches an FHX file for recipe parameters and reports them in a comma delimited list that can be viewed or imported into Excel.|Can be used to see which phase parameters are not", $tableListview)
+   GUICtrlCreateListViewItem("||deferred to any recipe parameter.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("RecTree|The recipe tree is output in a text file with this structure: Procedure Unit_Proc_1|Identify all the recipe components of the recipe for DQ,", $tableListview)
+   GUICtrlCreateListViewItem("|Operation_1 Phase_1|import, etc.", $tableListview)
+   GUICtrlCreateListViewItem("|Phase_2 Operation_2|", $tableListview)
+   GUICtrlCreateListViewItem("|Phase_1 Operation_3|", $tableListview)
+   GUICtrlCreateListViewItem("|Phase_1 Unit_Proc_2. It outputs the trees for all the highest level recipe components found.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("Search|Searches an FHX file for text or a text pattern and prints the full context of every place the text is found.|Find code that is writing to a module or parameter.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("SFCCheck|Check SFC logic in phases and/or Equipment Modules for two dozen different routine errors and guideline conformance.|Should be routinely used after editing a phase to check", $tableListview)
+   GUICtrlCreateListViewItem("||for typical errors in DeltaV coding.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("UnlinkInstConfig|Produces a new FHX file with all instance configurable parameters unlinked from the class. NOTE: requires importing the resulting file to the deltaV database so|Ensures instances are not getting values from the class", $tableListview)
+   GUICtrlCreateListViewItem("|MAKE A BACKUP FIRST.|so the default value in the class can be changed without", $tableListview)
+   GUICtrlCreateListViewItem("||affecting the instances.", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("CMSummary|A list of CM Classes and their properties. A list of module instances with all the properties that are common to all classes. A list of CM instances for each class in the |Helps with review of CM Instance Configuration.", $tableListview)
+   GUICtrlCreateListViewItem("|FHX file. Includes columns for instance configurable parameters of the class. Cells contain the value of the parameter for the instance. Shaded cells are linked to the|", $tableListview)
+   GUICtrlCreateListViewItem("|default value in the class.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("RecipeSummary|Phase - A list of phases referenced by recipe objects. A set of columns to uniquely identify Phase/Op/UP/Proc/Formula. Columns are added for each Recipe/Report |Helps with review of recipes and where phase input", $tableListview)
+   GUICtrlCreateListViewItem("|parameter/value in the phase/OP/UP/Proc/Formula. Color of each cell indicates which level the value is from. |parameter is used. Indicates which level the parameters", $tableListview)
+   GUICtrlCreateListViewItem("|Recipe - Includes a column for recipe objects. Count the use of each phase in each object. A set of columns to uniquely identify Op/UP/Proc/Formula. Columns are| are being set from.", $tableListview)
+   GUICtrlCreateListViewItem("|added for each Recipe parameter/value in the Op/UP/Proc/Formula. Color of each cell indicates which level the value is set from.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListviewItem("UnitSummary|A list of unit instances in the FHX file. List of phases assigned to these units along with their descriptions. List of aliases configured for the unit classes. A column for|Helps with review of Unit Instance Configuration.", $tableListview)
+   GUICtrlCreateListviewItem("|each unit instance. Cells contain the name of the module assigned to the alias/or ignored on that unit. List of unit parameters and values configured for the unit class.|", $tableListview)
+   GUICtrlCreateListviewItem("|A list of phases and the properties of the phase and their parameters on each unit class.|", $tableListview)
+   GUICtrlCreateListViewItem("", $tableListview)
+
+   GUICtrlCreateListViewItem("RecipeParamExtract|Extracts recipe parameters and puts them in a table format with values for each formula shown side by side.|Makes review of recipe parameters easier.", $tableListview)
+   ; ==========================================================================================================================
 
    ; Create normal window 1366 x 768 resolution
    $GUI = GUICreate("Code Review Tools Interface", 1366, 768)
@@ -308,7 +434,7 @@ Func MainApp()
 		 Case $readmeButton
 			Run("explorer.exe " & $path & "\crti\readme.txt")
 
-		 ; Child window for use cases
+		 ; Child window functionality ===================================================================
 		 Case $useCasesButton
 			;MsgBox("", "CRTI", "This feature has not yet been implemented")
 			; Use case function goes here
@@ -317,13 +443,16 @@ Func MainApp()
             While 1
 			   Switch GUIGetMsg()
 				  Case $GUI_EVENT_CLOSE
+					 ;GUICtrlSetData($applicableToolsLabel, "Applicable Tools: None")
 					 GUISetState(@SW_HIDE, $useCaseGUI)
 					 GUISetState($GUI_ENABLE, $GUI)
 					 ExitLoop
-				  Case $testButton
-					 MsgBox("", "", "Tools: ")
+
+				  ;Case $testButton
+					 ;GUICtrlSetData($applicableToolsLabel, "Applicable Tools: Test 1")
 			   EndSwitch
             WEnd
+		 ; =============================================================================================
 
 		 ; Main content buttons
 		 Case $fileButton
@@ -358,8 +487,6 @@ Func MainApp()
 				  $fileDesc = $fileName & $tempExtension
 			   EndIf
 			EndIf
-
-			;MsgBox("", "", $fileChosen)
 
 			If ($size = 1) Then
 			   GUICtrlSetData($fileNameDisplay, "File Chosen: " & $fileDesc)
