@@ -381,40 +381,6 @@ Func MainApp()
    GUICtrlSetTip($resultsButton, "Open the Results folder.")
    GUICtrlSetTip($fileButton, "Select FHX files to process.")
 
-   ; CLI TOOLS=============================================================
-   GUICtrlSetTip($FHXAlarmConfigButton, "Processes an FHX file and produces a CSV file listing all configuration information" & @CR & "for the alarms found in the FHX file.")
-   GUICtrlSetTip($FHXAliasByUnitClassButton, "Processes an FHX file and produces a CSV file with tables for each unit class listing alias" & @CR & "assignments, the number of alias references in code, and the number of units in each" & @CR & "class where the alias is not ignored.")
-   GUICtrlSetTip($FHXAnalogInfoButton, "Processes an FHX file and produces a CSV file listing all config information for analog modules" & @CR & "found in the FHX file.")
-   GUICtrlSetTip($FHXAreaLibObjListButton, "Creates a list of all objects in the FHX file where each object is tagged with the Area, " & @CR & "Process Cell, and Unit. The list includes the library objects used by the object.")
-   GUICtrlSetTip($FHXBulkTextProcButton, "Performs search/replace within a file using a set of search/replace defined in a separate file." & @CR & "It can replace any number of text patterns with any number of replacement patterns." & @CR & "Each pattern must be found and replaced within a single line of text in the target file. " & @CR & @CR & "NOTE: Requires importing the resulting file to the DeltaV database, so MAKE A BACKUP FIRST.")
-   GUICtrlSetTip($FHXDiffToolButton, "Compares two FHX files, outlining differences for change management on the DeltaV system." & @CR & "Lists a summary of differences between the versions before and after changes.")
-   GUICtrlSetTip($FHXHistoryParamsButton, "Processes an FHX file and produces a CSV file listing all parameters set up for" & @CR & "History collection. All the attributes of the history record are reported.")
-   GUICtrlSetTip($FHXModuleInstanceParamsButton, "Processes an FHX file and produces a CSV file listing all module instance" & @CR & "parameters and the values set in the instances.")
-   GUICtrlSetTip($FHXModParamsBuildOPCButton, "Processes an FHX file and produces a Tab-separated file listing all instance" & @CR & "configurable parameters and the values set in the instances. It adds a formula" & @CR & "for getting the realtime value using OPC.")
-   GUICtrlSetTip($FHXModTagListButton, "Processes an FHX file and produces a CSV file listing all module names found in the" & @CR & "FHX file.")
-   GUICtrlSetTip($FHXObjDateAndCheckOutButton, "Searches an FHX file of an entire database and, for every component that" & @CR & "is found in the file, creates a CSV record with the last modification date," & @CR & "user who modified it, and the name of the person who has it checked out.")
-   GUICtrlSetTip($FHXObjDateAndVerButton, "Searches an FHX file for components and prints a CSV file with the last modification" & @CR & "date, and the user who modified it for every component that is found in the file.")
-   GUICtrlSetTip($FHXParamListButton, "Processes an FHX file and produces a CSV file listing all controller parameters (no recipe" & @CR & "parameters) found in the FHX file." & @CR & @CR & "NOTE: This only reports the first line of expressions.")
-   GUICtrlSetTip($FHXParamMapButton, "Creates a map of the chain of recipe parameters. Creates a CSV file that shows how each top" & @CR & "level parameter is passed to the levels below. If run on the entire Recipe section," & @CR & "it will create a parameter map for all procedures.")
-   GUICtrlSetTip($FHXPhaseAliasUsageDetailButton, "Processes an FHX file and produces a CSV file with a list of all expressions within a" & @CR & "phase where aliases are used. It reports the location where the alias is used and the" & @CR & "type of use (read/write).")
-   GUICtrlSetTip($FHXPhaseParmListButton, "Processes an FHX file and produces a CSV file with a list of recipe and report parameters within" & @CR & "a phase. ALong with the name, it reports the ID, range, and Eng Units.")
-   GUICtrlSetTip($FHXPhaseRecParmUsageButton, "Processes an FHX file and produces a CSV file with a list of all expressions within a phase where" & @CR & "the batch parameters are used. It reports the location where the parameter is used" & @CR & "and the type of use (read/write).")
-   GUICtrlSetTip($FHXPrepDiff1LineButton, "Processes an FHX file to make it easier to use with a standard file compare utility. Use this" & @CR & "in conjunction with a batch file to look for differences between two FHX files. It prefaces each line" & @CR & "with the name of the object and location to provide context for differences.")
-   GUICtrlSetTip($FHXRecParamButton, "Searches an FHX file for recipe parameters and reports them in a CSV file.")
-   GUICtrlSetTip($FHXRecTreeButton, "Processes an FHX file and extracts the recipe tree from the file. It outputs the trees for all the" & @CR & "highest level recipe components found.")
-   GUICtrlSetTip($FHXSearchButton, "Searches an FHX file for text or a text pattern and prints the full context of every place the text is" & @CR & "found. A text pattern can include regular expressions. Patterns in spaces should be enclosed in quotes." & @CR & "If any object IDs are found, a list with the English translation is printed at the end of the output.")
-   GUICtrlSetTip($FHXSFCCheckButton, "Check SFC logic in phases and/or Equipment Modules for two dozen different routine errors and guideline conformance.")
-   GUICtrlSetTip($FHXUnlinkInstConfigButton, "Processes an FHX file and produces a new FHX file with all instance configurable parameters" & @CR & "unlinked from the class." & @CR & @CR & "NOTE: This requires importing the resulting file to the DeltaV database so MAKE A BACKUP FIRST.")
-
-   ; DRAGNDROP TOOLS=======================================================
-   GUICtrlSetTip($FHXCMSummaryButton, "Processes an FHX file and produces an XML file that can be opened in Excel as a spreadsheet." & @CR & "This file summarizes the CMs in the FHX file. See Tools/DragNDropTools/CMSummary/CM_Summary.txt for a" & @CR & "description of the output.")
-   GUICtrlSetTip($FHXRecipeSummaryButton, "Processes an FHX file and produces two XML files that can be opened in Excel as spreadsheets." & @CR & "These files summarize the recipes in the FHX file. See Tools/DragNDropTools/RecipeSummary/Recipe_Summary.txt" & @CR & "for a description of the output.")
-   GUICtrlSetTip($FHXUnitSummaryButton, "Processes an FHX file and produces an XML file that can be opened in Excel as a spreadsheet." & @CR & "This file summarizes the Units in the FHX file. See Tools/DragNDropTools/UnitSummary/Unit_Summary.txt" & @CR & "for a description of the output.")
-
-   ; EXCEL MACROS=============================================================
-   GUICtrlSetTip($FHXRecipeParamExtractButton, "Extracts recipe parameters from an FHX with an exported recipe. Puts recipe parameters" & @CR & "in a table format with values for each formula shown side by side.")
-
-
    ; Primary functionality =====================================================================================
    Local $tempDrive, $tempDir, $tempExtension
    Global $fileName
